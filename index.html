@@ -97,7 +97,7 @@
 </head>
 <body class="min-h-screen py-6 px-4 flex justify-center items-start bg-gray-50">
 
-    <div class="w-full max-w-lg bg-white rounded-3xl shadow-soft overflow-hidden border border-gray-100">
+    <div class="w-full max-w-lg bg-white rounded-3xl shadow-soft overflow-hidden border border-gray-100 relative z-0">
         
         <!-- Header -->
         <div class="relative bg-gradient-to-br from-brand-600 to-brand-700 p-8 text-white overflow-hidden">
@@ -220,6 +220,55 @@
         </form>
     </div>
 
+    <!-- SUCCESS MODAL POPUP -->
+    <div id="successModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-all opacity-0">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-all" id="modalContent">
+            <!-- Receipt Header -->
+            <div class="bg-green-500 p-6 text-center text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 rounded-full bg-white opacity-20"></div>
+                <div class="absolute bottom-0 left-0 -ml-4 -mb-4 w-16 h-16 rounded-full bg-white opacity-20"></div>
+                
+                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg text-green-500 animate-[bounce_1s_infinite]">
+                    <i class="fas fa-check text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold">Thành Công!</h2>
+                <p class="text-green-100 text-sm opacity-90">Dữ liệu đã được lưu</p>
+            </div>
+            
+            <!-- Receipt Body -->
+            <div class="p-6 space-y-4">
+                <div class="text-center border-b border-gray-100 pb-4">
+                    <p class="text-gray-400 text-[10px] uppercase tracking-widest font-bold mb-1">HÓA ĐƠN XÁC NHẬN</p>
+                    <h3 class="font-bold text-gray-800 text-xl" id="modalStudentName">Học Sinh</h3>
+                    <p class="text-brand-600 font-medium text-sm mt-0.5" id="modalShift">Ca học</p>
+                    <p class="text-gray-400 text-xs mt-1" id="modalTime">--/--/----</p>
+                </div>
+                
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-500">Tổng tiền sách lấy:</span>
+                        <span class="font-semibold text-gray-800" id="modalTotalTaken">0 đ</span>
+                    </div>
+                    <div class="flex justify-between items-center text-green-600">
+                        <span>Đã thanh toán:</span>
+                        <span class="font-bold bg-green-50 px-2 py-0.5 rounded" id="modalTotalPaid">0 đ</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-dashed border-gray-200 mt-2">
+                        <span class="font-bold text-gray-800 uppercase text-xs">Còn phải đóng:</span>
+                        <span class="font-bold text-xl text-red-500" id="modalTotalDue">0 đ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receipt Footer -->
+            <div class="p-4 bg-gray-50 border-t border-gray-100">
+                <button onclick="closeModal()" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3.5 rounded-xl shadow-lg transition-transform active:scale-[0.98] flex items-center justify-center gap-2">
+                    <i class="fas fa-redo-alt text-sm"></i> Đóng & Làm Mới
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- CẤU HÌNH ---
         // TODO: THAY URL GOOGLE SCRIPT CỦA BẠN VÀO DƯỚI ĐÂY
@@ -229,7 +278,7 @@
             { id: 'c1', name: 'Chương 1: Hàm số', price: 38000 },
             { id: 'c23', name: 'Chương 2+3: Hình & Thống kê', price: 32000 },
             { id: 'mid1', name: 'Sách Đề Ôn Thi Giữa Kì 1', price: 20000 }, 
-            { id: 'end1', name: 'Sách Đề Ôn Thi Cuối Kì 1', price: 28000 }, /* Đã sửa tên sách */
+            { id: 'end1', name: 'Sách Đề Ôn Thi Cuối Kì 1', price: 28000 }, 
             { id: 'c4', name: 'Chương 4: Nguyên hàm', price: 44000 }
         ];
 
@@ -357,6 +406,24 @@
             requestAnimationFrame(update);
         }
 
+        // Hàm đóng Modal và Reset
+        function closeModal() {
+            const modal = document.getElementById('successModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            // Animation out
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                // Reload trang để làm mới
+                window.location.reload();
+            }, 300);
+        }
+
         // Xử lý Gửi Form
         document.getElementById('invoiceForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -365,7 +432,7 @@
             const name = document.getElementById('studentName').value;
             const shiftInput = document.querySelector('input[name="shift"]:checked');
             
-            // Thay thế alert bằng thông báo trong UI để trải nghiệm tốt hơn và tuân thủ quy tắc
+            // Validation
             if(!shiftInput) { 
                 statusMsg.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>Vui lòng chọn ca học!';
                 statusMsg.className = "text-center text-sm font-bold mt-4 p-3 bg-red-50 text-red-600 rounded-xl border border-red-100 block";
@@ -398,8 +465,9 @@
                 return;
             }
 
+            // Loading state
             const originalContent = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Đang gửi...';
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Đang gửi dữ liệu...';
             btn.disabled = true;
             btn.classList.add('opacity-80', 'cursor-not-allowed');
 
@@ -418,14 +486,43 @@
                 method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
             })
             .then(() => {
-                statusMsg.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-2"></i>Gửi thành công!';
-                statusMsg.className = "text-center text-sm font-bold mt-4 p-3 bg-green-50 text-green-700 rounded-xl border border-green-100 block";
-                btn.innerHTML = '<span>Đã Gửi Thành Công</span> <i class="fas fa-check"></i>';
-                btn.classList.replace('bg-brand-600', 'bg-green-600');
-                btn.classList.replace('hover:bg-brand-700', 'hover:bg-green-700');
+                // Reset Button
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                btn.classList.remove('opacity-80', 'cursor-not-allowed');
+
+                // Điền thông tin vào Modal
+                document.getElementById('modalStudentName').textContent = name;
+                document.getElementById('modalShift').textContent = shiftLabel;
+                document.getElementById('modalTime').textContent = data.timestamp;
+                document.getElementById('modalTotalTaken').textContent = formatMoney(moneyTaken);
+                document.getElementById('modalTotalPaid').textContent = formatMoney(moneyPaid);
+                
+                const dueEl = document.getElementById('modalTotalDue');
+                const dueVal = moneyTaken - moneyPaid;
+                dueEl.textContent = formatMoney(dueVal);
+                if (dueVal <= 0) {
+                     dueEl.className = "font-bold text-xl text-green-500";
+                     dueEl.textContent = "0 đ (Hoàn tất)";
+                } else {
+                     dueEl.className = "font-bold text-xl text-red-500";
+                }
+
+                // Hiện Modal
+                const modal = document.getElementById('successModal');
+                const modalContent = document.getElementById('modalContent');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                // Animation In
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modalContent.classList.remove('scale-95');
+                    modalContent.classList.add('scale-100');
+                }, 10);
             })
             .catch(() => {
-                statusMsg.innerHTML = '❌ Lỗi mạng. Thử lại sau.';
+                statusMsg.innerHTML = '❌ Lỗi mạng hoặc lỗi server. Vui lòng thử lại sau.';
                 statusMsg.className = "text-center text-sm font-bold mt-4 p-3 bg-red-50 text-red-600 rounded-xl border border-red-100 block";
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
