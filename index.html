@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hóa Đơn Tiền Sách - Lớp Anh Đạt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                fontFamily: {
+                    sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                },
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(37, 99, 235, 0.2)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #F8FAFC; }
+        
+        /* Custom Checkbox */
+        .checkbox-wrapper input:checked + div {
+            background-color: #2563EB;
+            border-color: #2563EB;
+        }
+        .checkbox-wrapper input:checked + div svg {
+            stroke-dashoffset: 0;
+        }
+        .checkbox-check svg {
+            stroke-dasharray: 24;
+            stroke-dashoffset: 24;
+            transition: stroke-dashoffset 0.3s ease-in-out;
+        }
+
+        /* Animation cho phần mở rộng - Đã tối ưu để ẩn hoàn toàn */
+        .payment-expand {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        border-width 0.1s ease-in, 
+                        opacity 0.2s ease-in, 
+                        visibility 0.2s;
+            border-top-width: 0px;
+            border-color: #F3F4F6;
+            opacity: 0;           /* Ẩn hoàn toàn */
+            visibility: hidden;   /* Không chiếm tương tác */
+        }
+        .payment-expand.open {
+            grid-template-rows: 1fr;
+            border-top-width: 1px;
+            opacity: 1;
+            visibility: visible;
+        }
+        .payment-inner {
+            overflow: hidden;
+        }
+
+        /* Shift Radio */
+        .shift-radio:checked + div {
+            background-color: #EFF6FF;
+            border-color: #3B82F6;
+            color: #1D4ED8;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+        .shift-radio:checked + div .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        /* Payment Option */
+        .payment-option:checked + div {
+            background-color: var(--active-bg);
+            border-color: var(--active-border);
+            color: var(--active-text);
+            font-weight: 600;
+        }
+        .payment-option:checked + div i {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-4 flex justify-center items-start bg-gray-50">
+
+    <div class="w-full max-w-lg bg-white rounded-3xl shadow-soft overflow-hidden border border-gray-100">
+        
+        <!-- Header -->
+        <div class="relative bg-gradient-to-br from-brand-600 to-brand-700 p-8 text-white overflow-hidden">
+            <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-10 blur-xl"></div>
+            <div class="absolute bottom-0 left-0 -ml-8 -mb-8 w-24 h-24 rounded-full bg-white opacity-10 blur-lg"></div>
+            
+            <div class="relative z-10 flex justify-between items-center">
+                <div>
+                    <div class="text-blue-100 text-sm font-medium tracking-wide uppercase mb-1">Niên khóa 2025 - 2026</div>
+                    <h1 class="text-3xl font-bold tracking-tight">Hóa Đơn Sách</h1>
+                    <p class="text-blue-100 text-sm mt-1 opacity-90">Lớp Anh Đạt</p>
+                </div>
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-lg">
+                    <i class="fas fa-book-open text-2xl text-white"></i>
+                </div>
+            </div>
+        </div>
+
+        <form id="invoiceForm">
+            
+            <!-- Thông tin học sinh -->
+            <div class="p-6 pb-2">
+                <div class="space-y-5">
+                    <!-- Tên -->
+                    <div class="group">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Họ tên học sinh <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-brand-600 transition-colors">
+                                <i class="far fa-user"></i>
+                            </div>
+                            <input type="text" id="studentName" required
+                                class="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all font-medium text-gray-800 placeholder-gray-400"
+                                placeholder="Nhập tên của em...">
+                        </div>
+                    </div>
+
+                    <!-- Ca học -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Ca học <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="shift" value="246_17h30" class="shift-radio sr-only" required>
+                                <div class="p-3 border border-gray-200 rounded-xl bg-white text-gray-600 text-center hover:bg-gray-50 transition-all relative">
+                                    <div class="font-bold text-sm">2 - 4 - 6</div>
+                                    <div class="text-xs opacity-75 mt-0.5">17h30</div>
+                                    <div class="check-icon absolute top-2 right-2 text-brand-600 opacity-0 transform scale-50 transition-all duration-300"><i class="fas fa-check-circle"></i></div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="shift" value="246_19h00" class="shift-radio sr-only">
+                                <div class="p-3 border border-gray-200 rounded-xl bg-white text-gray-600 text-center hover:bg-gray-50 transition-all relative">
+                                    <div class="font-bold text-sm">2 - 4 - 6</div>
+                                    <div class="text-xs opacity-75 mt-0.5">19h00</div>
+                                    <div class="check-icon absolute top-2 right-2 text-brand-600 opacity-0 transform scale-50 transition-all duration-300"><i class="fas fa-check-circle"></i></div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="shift" value="357_17h30" class="shift-radio sr-only">
+                                <div class="p-3 border border-gray-200 rounded-xl bg-white text-gray-600 text-center hover:bg-gray-50 transition-all relative">
+                                    <div class="font-bold text-sm">3 - 5 - 7</div>
+                                    <div class="text-xs opacity-75 mt-0.5">17h30</div>
+                                    <div class="check-icon absolute top-2 right-2 text-brand-600 opacity-0 transform scale-50 transition-all duration-300"><i class="fas fa-check-circle"></i></div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="shift" value="37CN" class="shift-radio sr-only">
+                                <div class="p-3 border border-gray-200 rounded-xl bg-white text-gray-600 text-center hover:bg-gray-50 transition-all relative">
+                                    <div class="font-bold text-sm">3 - 7 - CN</div>
+                                    <div class="text-xs opacity-75 mt-0.5">Lịch riêng</div>
+                                    <div class="check-icon absolute top-2 right-2 text-brand-600 opacity-0 transform scale-50 transition-all duration-300"><i class="fas fa-check-circle"></i></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 my-4"></div>
+
+            <!-- Danh sách sách -->
+            <div class="px-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide">Danh mục sách</h3>
+                    <div class="bg-blue-50 text-brand-700 px-3 py-1 rounded-full text-xs font-semibold">
+                        Chọn sách đã nhận
+                    </div>
+                </div>
+                
+                <div id="bookList" class="space-y-4">
+                    <!-- Javascript sẽ tạo danh sách ở đây -->
+                </div>
+            </div>
+
+            <!-- Tổng kết & Gửi -->
+            <div class="mt-8 bg-gray-50 border-t border-gray-200 p-6 rounded-b-3xl">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6">
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-500">Tổng giá trị sách đã nhận</span>
+                            <span id="totalTaken" class="font-semibold text-gray-800">0 đ</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-500">Đã thanh toán</span>
+                            <span id="totalPaid" class="font-semibold text-green-600">0 đ</span>
+                        </div>
+                        <div class="border-t border-dashed border-gray-200 pt-3 flex justify-between items-end">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Cần thanh toán</span>
+                            <span id="totalDue" class="text-2xl font-bold text-red-500">0 đ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" 
+                    class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-xl shadow-lg transform transition active:scale-[0.98] flex justify-center items-center gap-2 group shadow-glow">
+                    <span>Xác Nhận & Gửi Hóa Đơn</span>
+                    <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </button>
+                <p id="statusMsg" class="text-center text-sm font-medium mt-4 hidden"></p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // --- CẤU HÌNH ---
+        // TODO: THAY URL GOOGLE SCRIPT CỦA BẠN VÀO DƯỚI ĐÂY
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzcF8DknVF9rHq-UIXA8JHh3Wj3fDbheblG5HEsmN8iWPhEI_0SbzGKcyQLlS0Il-jHKw/exec'; 
+
+        const books = [
+            { id: 'c1', name: 'Chương 1: Hàm số', price: 38000 },
+            { id: 'c23', name: 'Chương 2+3: Hình & Thống kê', price: 32000 },
+            { id: 'mid1', name: 'Sách Đề Ôn Thi Giữa Kì 1', price: 20000 }, 
+            { id: 'end1', name: 'Sách Đề Ôn Thi Cuối Kì 1', price: 28000 }, /* Đã sửa tên sách */
+            { id: 'c4', name: 'Chương 4: Nguyên hàm', price: 44000 }
+        ];
+
+        const formatMoney = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+        const bookListEl = document.getElementById('bookList');
+
+        // Render danh sách sách
+        books.forEach((book, index) => {
+            const row = document.createElement('div');
+            // Container chính của mỗi dòng sách
+            row.className = "bg-white border border-gray-200 rounded-2xl p-0 transition-all hover:border-brand-200 hover:shadow-soft group/item";
+            
+            row.innerHTML = `
+                <!-- PHẦN TRÊN: Dùng thẻ LABEL bao trùm toàn bộ để bấm đâu cũng ăn -->
+                <label class="p-4 flex justify-between items-center cursor-pointer select-none relative z-10 w-full h-full">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-sm group-hover/item:bg-brand-50 group-hover/item:text-brand-600 transition-colors">
+                            ${index + 1}
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-800 text-[15px] leading-tight group-hover/item:text-brand-700 transition-colors">${book.name}</div>
+                            <div class="text-gray-400 text-xs font-medium mt-1">${formatMoney(book.price)}</div>
+                        </div>
+                    </div>
+
+                    <!-- Checkbox Input (Ẩn) & Visual (Hiện) -->
+                    <div class="checkbox-wrapper relative">
+                        <!-- onchange thay vì onclick để ổn định hơn -->
+                        <input type="checkbox" class="sr-only chk-receive" id="chk-${book.id}" data-id="${book.id}" data-price="${book.price}" onchange="handleCheck('${book.id}')">
+                        <div class="w-7 h-7 border-2 border-gray-300 rounded-lg flex items-center justify-center transition-all bg-white hover:border-brand-400 checkbox-check">
+                            <svg class="w-4 h-4 text-white pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </label>
+
+                <!-- PHẦN DƯỚI: Thanh toán (Mở rộng khi đã chọn) -->
+                <!-- Có opacity: 0 và visibility: hidden khi đóng để không lộ thông tin -->
+                <div class="payment-expand bg-gray-50/50" id="expand-${book.id}">
+                    <div class="payment-inner px-4 pb-4 pt-2">
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-xs font-semibold text-gray-500 uppercase">Trạng thái đóng tiền?</span>
+                            
+                            <div class="bg-gray-200 p-1 rounded-lg flex items-center gap-1">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="pay_status_${book.id}" value="no" class="sr-only payment-option" checked onchange="calculateTotal()">
+                                    <div class="px-3 py-1.5 rounded-md text-xs font-medium text-gray-500 transition-all flex items-center gap-1.5 hover:text-gray-700" style="--active-bg: #fff; --active-border: transparent; --active-text: #EF4444;">
+                                        <i class="fas fa-times-circle hidden text-red-500"></i> Chưa
+                                    </div>
+                                </label>
+
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="pay_status_${book.id}" value="yes" class="sr-only payment-option" onchange="calculateTotal()">
+                                    <div class="px-3 py-1.5 rounded-md text-xs font-medium text-gray-500 transition-all flex items-center gap-1.5 hover:text-gray-700" style="--active-bg: #fff; --active-border: transparent; --active-text: #10B981; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                                        <i class="fas fa-check-circle hidden text-green-500"></i> Đã đóng
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            bookListEl.appendChild(row);
+        });
+
+        // Xử lý hiệu ứng khi check/uncheck
+        function handleCheck(id) {
+            const chk = document.getElementById(`chk-${id}`);
+            const expand = document.getElementById(`expand-${id}`);
+            const row = chk.closest('.bg-white');
+
+            if (chk.checked) {
+                expand.classList.add('open');
+                row.classList.add('ring-2', 'ring-brand-500', 'border-transparent');
+            } else {
+                expand.classList.remove('open');
+                row.classList.remove('ring-2', 'ring-brand-500', 'border-transparent');
+                
+                // Reset về chưa thanh toán
+                const radioNo = document.querySelector(`input[name="pay_status_${id}"][value="no"]`);
+                if(radioNo) radioNo.checked = true;
+            }
+            calculateTotal();
+        }
+
+        // Tính tổng tiền
+        function calculateTotal() {
+            let totalTaken = 0;
+            let totalPaid = 0;
+
+            books.forEach(book => {
+                const chk = document.getElementById(`chk-${book.id}`);
+                if (chk && chk.checked) {
+                    totalTaken += book.price;
+                    const isPaid = document.querySelector(`input[name="pay_status_${book.id}"][value="yes"]`).checked;
+                    if (isPaid) totalPaid += book.price;
+                }
+            });
+
+            const totalDue = totalTaken - totalPaid;
+            animateValue("totalTaken", parseMoney(document.getElementById('totalTaken').innerText), totalTaken);
+            animateValue("totalPaid", parseMoney(document.getElementById('totalPaid').innerText), totalPaid);
+            animateValue("totalDue", parseMoney(document.getElementById('totalDue').innerText), totalDue);
+        }
+
+        function parseMoney(str) { return parseInt(str.replace(/[^\d]/g, '')) || 0; }
+
+        function animateValue(id, start, end) {
+            if (start === end) return;
+            const obj = document.getElementById(id);
+            const duration = 300;
+            const startTime = performance.now();
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.floor(start + (end - start) * (1 - (1 - progress) * (1 - progress)));
+                obj.innerText = formatMoney(current);
+                if (progress < 1) requestAnimationFrame(update);
+                else {
+                    obj.innerText = formatMoney(end);
+                    if(id === 'totalDue') obj.className = end > 0 ? "text-2xl font-bold text-red-500" : "text-2xl font-bold text-green-500";
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // Xử lý Gửi Form
+        document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const statusMsg = document.getElementById('statusMsg');
+            const name = document.getElementById('studentName').value;
+            const shiftInput = document.querySelector('input[name="shift"]:checked');
+            
+            // Thay thế alert bằng thông báo trong UI để trải nghiệm tốt hơn và tuân thủ quy tắc
+            if(!shiftInput) { 
+                statusMsg.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>Vui lòng chọn ca học!';
+                statusMsg.className = "text-center text-sm font-bold mt-4 p-3 bg-red-50 text-red-600 rounded-xl border border-red-100 block";
+                return; 
+            }
+
+            let shiftLabel = shiftInput.value;
+            const shiftMap = { '246_17h30': '2-4-6 (17h30)', '246_19h00': '2-4-6 (19h00)', '357_17h30': '3-5-7 (17h30)', '37CN': '3-7-CN' };
+            if(shiftMap[shiftLabel]) shiftLabel = shiftMap[shiftLabel];
+
+            let listTaken = [], listPaid = [], moneyTaken = 0, moneyPaid = 0;
+
+            books.forEach(book => {
+                const chk = document.getElementById(`chk-${book.id}`);
+                if (chk && chk.checked) {
+                    listTaken.push(book.name);
+                    moneyTaken += book.price;
+                    if (document.querySelector(`input[name="pay_status_${book.id}"][value="yes"]`).checked) {
+                        listPaid.push(book.name);
+                        moneyPaid += book.price;
+                    }
+                }
+            });
+
+            if (listTaken.length === 0 && !confirm("Em chưa chọn cuốn sách nào. Có chắc muốn gửi không?")) return;
+
+            if (GOOGLE_SCRIPT_URL.includes('THAY_URL')) {
+                 statusMsg.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Chưa kết nối Google Sheet (Xem hướng dẫn)';
+                 statusMsg.className = "text-center text-sm font-bold mt-4 p-3 bg-yellow-50 text-yellow-600 rounded-xl border border-yellow-100 block";
+                return;
+            }
+
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Đang gửi...';
+            btn.disabled = true;
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+
+            const data = {
+                timestamp: new Date().toLocaleString('vi-VN'),
+                name: name,
+                shift: shiftLabel,
+                booksTaken: listTaken.join('\n'), 
+                booksPaid: listPaid.join('\n'),
+                moneyTaken: moneyTaken,
+                moneyPaid: moneyPaid,
+                moneyDue: moneyTaken - moneyPaid
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            })
+            .then(() => {
+                statusMsg.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-2"></i>Gửi thành công!';
+                statusMsg.className = "text-center text-sm font-bold mt-4 p-3 bg-green-50 text-green-700 rounded-xl border border-green-100 block";
+                btn.innerHTML = '<span>Đã Gửi Thành Công</span> <i class="fas fa-check"></i>';
+                btn.classList.replace('bg-brand-600', 'bg-green-600');
+                btn.classList.replace('hover:bg-brand-700', 'hover:bg-green-700');
+            })
+            .catch(() => {
+                statusMsg.innerHTML = '❌ Lỗi mạng. Thử lại sau.';
+                statusMsg.className = "text-center text-sm font-bold mt-4 p-3 bg-red-50 text-red-600 rounded-xl border border-red-100 block";
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                btn.classList.remove('opacity-80', 'cursor-not-allowed');
+            });
+        });
+    </script>
+</body>
+</html>
