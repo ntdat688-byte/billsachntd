@@ -236,12 +236,20 @@
             </div>
             
             <!-- Receipt Body -->
-            <div class="p-6 space-y-4">
-                <div class="text-center border-b border-gray-100 pb-4">
+            <div class="p-6">
+                <div class="text-center border-b border-gray-100 pb-4 mb-4">
                     <p class="text-gray-400 text-[10px] uppercase tracking-widest font-bold mb-1">HÓA ĐƠN XÁC NHẬN</p>
                     <h3 class="font-bold text-gray-800 text-xl" id="modalStudentName">Học Sinh</h3>
                     <p class="text-brand-600 font-medium text-sm mt-0.5" id="modalShift">Ca học</p>
                     <p class="text-gray-400 text-xs mt-1" id="modalTime">--/--/----</p>
+                </div>
+
+                <!-- Book List (Bill items) -->
+                <div class="bg-gray-50 p-3 rounded-xl border border-dashed border-gray-200 mb-4 text-xs">
+                    <p class="font-bold text-gray-400 uppercase tracking-wide mb-2 text-[10px]">Chi tiết sách lấy</p>
+                    <div id="modalBookList" class="space-y-2 text-gray-600">
+                        <!-- Items will be populated here -->
+                    </div>
                 </div>
                 
                 <div class="space-y-3 text-sm">
@@ -495,6 +503,24 @@
                 document.getElementById('modalStudentName').textContent = name;
                 document.getElementById('modalShift').textContent = shiftLabel;
                 document.getElementById('modalTime').textContent = data.timestamp;
+                
+                // Populate Modal Book List
+                const modalBookList = document.getElementById('modalBookList');
+                modalBookList.innerHTML = ''; // Clear previous content
+                
+                books.forEach(book => {
+                    const chk = document.getElementById(`chk-${book.id}`);
+                    if (chk && chk.checked) {
+                        const itemRow = document.createElement('div');
+                        itemRow.className = 'flex justify-between items-start';
+                        itemRow.innerHTML = `
+                            <span class="w-2/3 truncate pr-2">${book.name}</span>
+                            <span class="font-medium">${formatMoney(book.price)}</span>
+                        `;
+                        modalBookList.appendChild(itemRow);
+                    }
+                });
+
                 document.getElementById('modalTotalTaken').textContent = formatMoney(moneyTaken);
                 document.getElementById('modalTotalPaid').textContent = formatMoney(moneyPaid);
                 
